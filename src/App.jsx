@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Select } from "antd";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 // import { FaEdit, FaSave } from "react-icons/fa";
 import { FaEdit, FaSave, FaSpinner } from "react-icons/fa";
 function App() {
@@ -346,14 +348,14 @@ function App() {
         console.log("🔹 Quantity Update Result:", quantityResult);
 
         if (medicineResult.success && quantityResult.success) {
-          alert("Row updated successfully!");
+          toast.success("Row updated successfully!");
         } else {
-          alert("Error updating row: " + (medicineResult.error || quantityResult.error));
+          toast.error("Error updating row: " + (medicineResult.error || quantityResult.error));
         }
 
       } catch (err) {
         console.error("Error updating row:", err);
-        alert("Error updating row. Please try again.");
+        toast.error("Error updating row. Please try again.");
       } finally {
         setLoadingRow(null);
       }
@@ -402,6 +404,7 @@ function App() {
     setIsSubmitting(true);
     try {
       const submissionData = [];
+      let hasError = false; // 🔴 flag
 
       // Collect data from selected rows
       Object.keys(selectedRows).forEach(rowId => {
@@ -410,6 +413,14 @@ function App() {
           const approval = approvalData[rowId] || {};
 
           if (row) {
+            // ✅ required check
+            if (!approval.approvedBy || approval.approvedBy === "") {
+              hasError = true;
+            }
+            if (!approval.status || approval.status === "") {
+              hasError = true;
+            }
+
             submissionData.push([
               row.timestamp,
               row.indentNumber,
@@ -424,18 +435,16 @@ function App() {
       });
 
       if (submissionData.length === 0) {
-        alert('Please select at least one row to submit.');
+        toast.info('Please select at least one row to submit.');
+        setIsSubmitting(false);
         return;
       }
 
-      const invalidRows = submissionData.filter(
-        (row) => !row.approvedBy || !row.status
-      );
-      if (invalidRows.length > 0) {
-        alert('Please fill both "Approved By" and "Status" for all selected rows before submitting.');
+      if (hasError) {
+        toast.info("Please select both 'Approved By' and 'Status' for all selected rows.");
+        setIsSubmitting(false);
         return;
       }
-
 
       // Submit each row individually
       const promises = submissionData.map(rowData =>
@@ -458,7 +467,7 @@ function App() {
       const allSuccessful = responses.every(r => r.success);
 
       if (allSuccessful) {
-        alert('Data submitted successfully!');
+        toast.success('Data submitted successfully!');
         setSelectedRows({});
         setEditingRows({});
         setApprovalData({});
@@ -473,7 +482,7 @@ function App() {
       }
     } catch (error) {
       console.error('Error submitting data:', error);
-      alert('Error submitting data. Please try again.');
+      toast.error('Error submitting data. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -490,6 +499,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <ToastContainer position="top-right" autoClose={3000} />
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 py-10 px-10">
         {/* Empty header with just margin and background color as requested */}
@@ -528,7 +538,7 @@ function App() {
                   }
                 }}
                 placeholder="Select Indent"
-                className="w-48"
+                className="w-44"
                 optionFilterProp="children"
                 filterOption={(input, option) =>
                   option?.children?.toLowerCase().includes(input.toLowerCase())
@@ -559,7 +569,7 @@ function App() {
                   }
                 }}
                 placeholder="Select Admission"
-                className="w-48"
+                className="w-44"
                 optionFilterProp="children"
                 filterOption={(input, option) =>
                   option?.children?.toLowerCase().includes(input.toLowerCase())
@@ -590,7 +600,7 @@ function App() {
                   }
                 }}
                 placeholder="Select Staff"
-                className="w-48"
+                className="w-44"
                 optionFilterProp="children"
                 filterOption={(input, option) =>
                   option?.children?.toLowerCase().includes(input.toLowerCase())
@@ -621,7 +631,7 @@ function App() {
                   }
                 }}
                 placeholder="Select Ward Type"
-                className="w-48"
+                className="w-44"
                 optionFilterProp="children"
                 filterOption={(input, option) =>
                   option?.children?.toLowerCase().includes(input.toLowerCase())
@@ -653,7 +663,7 @@ function App() {
                   }
                 }}
                 placeholder="Select Diagnosis"
-                className="w-48"
+                className="w-44"
                 optionFilterProp="children"
                 filterOption={(input, option) =>
                   option.children.toLowerCase().includes(input.toLowerCase())
@@ -676,7 +686,7 @@ function App() {
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting} // Disable button while submitting
-                className="w-40 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 flex items-center justify-center"
+                className="w-48 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 flex items-center justify-center"
               >
                 {isSubmitting ? (
                   <>
@@ -864,18 +874,15 @@ function App() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {selectedRows[row.id] ? (
                             <select
-                              required
                               value={approvalData[row.id]?.approvedBy || ''}
                               onChange={(e) => handleApprovalDataChange(row.id, 'approvedBy', e.target.value)}
-                              className={`w-full px-2 py-1 border rounded text-sm ${!approvalData[row.id]?.approvedBy ? "border-red-500" : "border-gray-300"
-                                }`}
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                             >
                               <option value="">Select Name</option>
                               <option value="Dr. Ankit">Deepak Sahu</option>
                               <option value="Dr. Ravi">Dr. Pawan Sahu</option>
-                              <option value="Dr. Priya">Yogita</option>
+                              <option value="Dr. Priya">Yogita </option>
                             </select>
-
                           ) : (
                             row.approvedBy
                           )}
@@ -884,17 +891,14 @@ function App() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           {selectedRows[row.id] ? (
                             <select
-                              required
                               value={approvalData[row.id]?.status || ''}
                               onChange={(e) => handleApprovalDataChange(row.id, 'status', e.target.value)}
-                              className={`px-2 py-1 border rounded text-sm ${!approvalData[row.id]?.status ? "border-red-500" : "border-gray-300"
-                                }`}
+                              className="px-2 py-1 border border-gray-300 rounded text-sm"
                             >
                               <option value="">Select Status</option>
                               <option value="Approved">Approved</option>
                               <option value="Rejected">Rejected</option>
                             </select>
-
                           ) : (
                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${row.status === 'Approved' ? 'bg-green-100 text-green-800' :
                               row.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
@@ -967,8 +971,3 @@ function App() {
 }
 
 export default App;
-
-
-
-
-
