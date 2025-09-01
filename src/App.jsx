@@ -97,9 +97,9 @@ function App() {
 
     const filtered = tableData.filter((row) => {
       // Early return for empty filters
-      if (!searchTerm && !selectedIndent && !selectedAdmission && !selectedStaff && !selectedDiagnosis) {
-        return true;
-      }
+      if (!searchTerm && !selectedIndent && !selectedAdmission && !selectedStaff && !selectedDiagnosis && !selectedWardType) {
+      return true;
+    }
 
       // Dropdown filters (most selective first for early exit)
       if (selectedIndent && row.indentNumber !== selectedIndent) return false;
@@ -121,7 +121,7 @@ function App() {
 
     console.log("🔹 Filtered", filtered.length, "rows from", tableData.length, "total rows");
     setFilteredData(filtered);
-  }, [tableData, searchTerm, selectedIndent, selectedAdmission, selectedStaff, selectedDiagnosis]);
+  }, [tableData, searchTerm, selectedIndent, selectedAdmission, selectedStaff, selectedDiagnosis, selectedWardType]); 
 
   // Apply filters whenever dependencies change
   useEffect(() => {
