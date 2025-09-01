@@ -20,6 +20,8 @@ function App() {
   const [loadingRow, setLoadingRow] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filteredData, setFilteredData] = useState([]);
+  const [selectedWardType, setSelectedWardType] = useState('');
+
 
   // Pagination state variables
   const [currentPage, setCurrentPage] = useState(1);
@@ -102,6 +104,8 @@ function App() {
       if (selectedAdmission && row.admissionNo !== selectedAdmission) return false;
       if (selectedStaff && row.staffName !== selectedStaff) return false;
       if (selectedDiagnosis && row.diagnosis !== selectedDiagnosis) return false;
+      if (selectedWardType && row.wardType !== selectedWardType) return false;
+
 
       // Search filter (most expensive, do last)
       if (searchTerm) {
@@ -424,6 +428,15 @@ function App() {
         return;
       }
 
+      const invalidRows = submissionData.filter(
+        (row) => !row.approvedBy || !row.status
+      );
+      if (invalidRows.length > 0) {
+        alert('Please fill both "Approved By" and "Status" for all selected rows before submitting.');
+        return;
+      }
+
+
       // Submit each row individually
       const promises = submissionData.map(rowData =>
         fetch(BACKEND_URL, {
@@ -471,6 +484,8 @@ function App() {
   const uniqueAdmissionNos = [...new Set(tableData.map(row => row.admissionNo))].filter(Boolean);
   const uniqueStaffNames = [...new Set(tableData.map(row => row.staffName))].filter(Boolean);
   const uniqueDiagnoses = [...new Set(tableData.map(row => row.diagnosis))].filter(Boolean);
+  const uniqueWardTypes = [...new Set(tableData.map(row => row.wardType))].filter(Boolean);
+
 
 
   return (
@@ -484,7 +499,8 @@ function App() {
       <div className="w-full px-6 py-8 ">
         {/* Filters Section */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+          <div className="flex items-end gap-4 flex-wrap">
+
             {/* Search Input */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
@@ -493,7 +509,7 @@ function App() {
                 placeholder="search across all field"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-50 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
@@ -501,6 +517,7 @@ function App() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Indent Number</label>
               <Select
+                size="large"
                 showSearch
                 value={selectedIndent}
                 onChange={(value) => {
@@ -511,7 +528,7 @@ function App() {
                   }
                 }}
                 placeholder="Select Indent"
-                className="w-full"
+                className="w-48"
                 optionFilterProp="children"
                 filterOption={(input, option) =>
                   option?.children?.toLowerCase().includes(input.toLowerCase())
@@ -531,6 +548,7 @@ function App() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Admission No.</label>
               <Select
+                size="large"
                 showSearch
                 value={selectedAdmission}
                 onChange={(value) => {
@@ -541,7 +559,7 @@ function App() {
                   }
                 }}
                 placeholder="Select Admission"
-                className="w-full"
+                className="w-48"
                 optionFilterProp="children"
                 filterOption={(input, option) =>
                   option?.children?.toLowerCase().includes(input.toLowerCase())
@@ -561,6 +579,7 @@ function App() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Staff Name</label>
               <Select
+                size="large"
                 showSearch
                 value={selectedStaff}
                 onChange={(value) => {
@@ -571,7 +590,7 @@ function App() {
                   }
                 }}
                 placeholder="Select Staff"
-                className="w-full"
+                className="w-48"
                 optionFilterProp="children"
                 filterOption={(input, option) =>
                   option?.children?.toLowerCase().includes(input.toLowerCase())
@@ -587,10 +606,43 @@ function App() {
             </div>
 
 
+            {/* Ward Type Dropdown */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Ward Type</label>
+              <Select
+                size="large"
+                showSearch
+                value={selectedWardType}
+                onChange={(value) => {
+                  if (value === "all") {
+                    setSelectedWardType(""); // ✅ All select karne par sab show hoga
+                  } else {
+                    setSelectedWardType(value);
+                  }
+                }}
+                placeholder="Select Ward Type"
+                className="w-48"
+                optionFilterProp="children"
+                filterOption={(input, option) =>
+                  option?.children?.toLowerCase().includes(input.toLowerCase())
+                }
+              >
+                {/* 👇 All option */}
+                <Option key="all" value="all">All Ward Types</Option>
+
+                {uniqueWardTypes.map(ward => (
+                  <Option key={ward} value={ward}>{ward}</Option>
+                ))}
+              </Select>
+            </div>
+
+
+
             {/* Diagnosis Dropdown */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Diagnosis</label>
               <Select
+                size="large"
                 showSearch
                 value={selectedDiagnosis}
                 onChange={(value) => {
@@ -601,7 +653,7 @@ function App() {
                   }
                 }}
                 placeholder="Select Diagnosis"
-                className="w-full"
+                className="w-48"
                 optionFilterProp="children"
                 filterOption={(input, option) =>
                   option.children.toLowerCase().includes(input.toLowerCase())
@@ -624,7 +676,7 @@ function App() {
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting} // Disable button while submitting
-                className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 flex items-center justify-center"
+                className="w-40 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 flex items-center justify-center"
               >
                 {isSubmitting ? (
                   <>
@@ -676,8 +728,27 @@ function App() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-blue-600">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Select Field</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Edit</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">
+                      <input
+                        type="checkbox"
+                        checked={
+                          filteredData.length > 0 &&
+                          filteredData.every((row) => selectedRows[row.id])
+                        }
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          const newSelectedRows = {};
+                          if (checked) {
+                            filteredData.forEach((row) => {
+                              newSelectedRows[row.id] = true;
+                            });
+                          }
+                          setSelectedRows(newSelectedRows);
+                        }}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                    </th>
+
                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Timestamp</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Indent Number</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Serial Number</th>
@@ -687,12 +758,13 @@ function App() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Patient Name</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">HUID No.</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Age</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Gender</th>
+                    {/* <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Gender</th> */}
                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Diagnosis</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Ward Type</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Category</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Floor Location</th>
+                    {/* <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Floor Location</th> */}
                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Request Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Edit</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Medicine Name</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Quantity</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider sticky top-0 z-10 bg-blue-600">Approved By</th>
@@ -718,6 +790,23 @@ function App() {
                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                           />
                         </td>
+
+
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.timestamp}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{row.indentNumber}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.serialNumber}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.admissionNo}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.staffName}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.consultantName}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.patientName}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.huidNo}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.age}</td>
+                        {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.gender}</td> */}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.diagnosis}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.wardType}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.category}</td>
+                        {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.floorLocation}</td> */}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.requestType}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button
                             onClick={() => handleEdit(row.indentNumber, row.serialNumber)}
@@ -739,22 +828,6 @@ function App() {
                             )}
                           </button>
                         </td>
-
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.timestamp}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{row.indentNumber}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.serialNumber}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.admissionNo}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.staffName}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.consultantName}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.patientName}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.huidNo}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.age}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.gender}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.diagnosis}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.wardType}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.category}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.floorLocation}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.requestType}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {editingRows[row.id] ? ( // ✅ Use row.id to check edit state
                             <Select
@@ -791,15 +864,18 @@ function App() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {selectedRows[row.id] ? (
                             <select
+                              required
                               value={approvalData[row.id]?.approvedBy || ''}
                               onChange={(e) => handleApprovalDataChange(row.id, 'approvedBy', e.target.value)}
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                              className={`w-full px-2 py-1 border rounded text-sm ${!approvalData[row.id]?.approvedBy ? "border-red-500" : "border-gray-300"
+                                }`}
                             >
                               <option value="">Select Name</option>
                               <option value="Dr. Ankit">Deepak Sahu</option>
                               <option value="Dr. Ravi">Dr. Pawan Sahu</option>
-                              <option value="Dr. Priya">Yogita </option>
+                              <option value="Dr. Priya">Yogita</option>
                             </select>
+
                           ) : (
                             row.approvedBy
                           )}
@@ -808,14 +884,17 @@ function App() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           {selectedRows[row.id] ? (
                             <select
+                              required
                               value={approvalData[row.id]?.status || ''}
                               onChange={(e) => handleApprovalDataChange(row.id, 'status', e.target.value)}
-                              className="px-2 py-1 border border-gray-300 rounded text-sm"
+                              className={`px-2 py-1 border rounded text-sm ${!approvalData[row.id]?.status ? "border-red-500" : "border-gray-300"
+                                }`}
                             >
                               <option value="">Select Status</option>
                               <option value="Approved">Approved</option>
                               <option value="Rejected">Rejected</option>
                             </select>
+
                           ) : (
                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${row.status === 'Approved' ? 'bg-green-100 text-green-800' :
                               row.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
