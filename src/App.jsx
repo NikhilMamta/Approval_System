@@ -879,9 +879,9 @@ function App() {
                               className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                             >
                               <option value="">Select Name</option>
-                              <option value="Dr. Ankit">Deepak Sahu</option>
-                              <option value="Dr. Ravi">Dr. Pawan Sahu</option>
-                              <option value="Dr. Priya">Yogita </option>
+                              <option value="Deepak Sahu">Deepak Sahu</option>
+                              <option value="Dr. Pawan Sahu">Dr. Pawan Sahu</option>
+                              <option value="Yogita ">Yogita </option>
                             </select>
                           ) : (
                             row.approvedBy
